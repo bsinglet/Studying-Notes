@@ -1,7 +1,7 @@
 # Seven Languages in Seven Weeks
 # Week 1 - Ruby
 ## Day 1 self-study
-- Very little unneeded puncuation, but plenty of syntactic sugar in Ruby, meant to make things as productive as possible for the programmer rather than the computer.
+- Very little unneeded punctuation, but plenty of syntactic sugar in Ruby, meant to make things as productive as possible for the programmer rather than the computer.
 - Two types of string literals: single-quoted and double-quoted. Single-quoted are just taken at face value, whereas double-quoted are more like Python f-strings. The latter can have variables substituted into them, and will also correctly interpret things like `\n` as special characters:
 ```
 irb(main):001:0> puts 'Hello, world!'
@@ -288,7 +288,7 @@ irb(main):010:0> :x.object_id
 => 772188
 ```
 - Hashes and symbols are a great combination for flexible, non-OOP data structures like we often use in Clojure.
-- They can also be used to emulate using named parameters, which Ruby doesn't have built-in
+- They can also be used to emulate using named parameters, which Ruby doesn't have built-in.
 ```
 def process_payment(options=[])
   if options[:type] == "credit" and options[:brand] == "VISA"
@@ -316,7 +316,20 @@ some stuff
 some stuff
 => 3
 ```
--
+- You can define methods in a way that calls code blocks passed to them.
+```
+irb(main):001:0> "4".to_i + 3
+=> 7
+irb(main):002:1* def foo(x)
+irb(main):003:2*   if x > 0
+irb(main):004:2*     yield
+irb(main):005:1*   end
+irb(main):006:0> end
+=> :foo
+irb(main):007:0> foo(5) {puts "it worked!"}
+it worked!
+=> nil
+```
 
 ### Defining Classes
 - Class names have to start with a capital letter, and are usually CamelCase.
@@ -346,14 +359,75 @@ Traceback (most recent call last):
 NoMethodError (undefined method `private_info' for #<Foo:0x000055e480eff028>)
 Did you mean?  private_methods
 ```
-- a
+- You can use `@` to specify an instance variable (unique values for each instance of that class) and `@@` to specify a class variable (shared by all instances of that class.)
+```
+class Person
+  @@population = 0
+
+  def initialize(name)
+    @@population += 1
+    @name = name
+  end
+
+  def get_name
+    puts "My name is #{@name}."
+  end
+
+  def get_population
+    puts "Global population is #{@@population}."
+  end
+end
+
+irb(main):018:0> alice = Person.new("Alice")
+irb(main):019:0> alice.get_population()
+Global population is 1.
+=> nil
+irb(main):020:0> bob = Person.new("Bob")
+irb(main):021:0> alice.get_population()
+Global population is 2.
+=> nil
+irb(main):022:0> chuck = Person.new("Chuck")
+irb(main):023:0> alice.get_population()
+Global population is 3.
+=> nil
+```
 
 ### Writing a mixin
 - Mix-ins are Ruby's solution to not allowing Classes to have more than one parent class. They are similar to Java's solution of defining Interfaces.
-- You can have
+```
+module ToFile
+  def filename
+    "object_#{self.object_id}.txt"
+  end
+
+  def to_f
+    File.open(filename, 'w') {|f| f.write(to_s)}
+  end
+end
+
+class Person
+  include ToFile
+  attr_accessor :name
+
+  def initialize(name)
+    @name = name
+  end
+
+  def to_s
+    name
+  end
+end
+Person.new('matz').to_f
+```
+which results in
+```
+irb(main):034:0> Person.new('matz').to_f
+=> 4
+```
+and creates a new file named `object_180.txt` with the contents `matz`.
 
 ### Modules, Enumerable, and Sets
-- Modules are like namespaces or libraries in other langauges. They have the same format as a Class, except using the `module` keyword instead of `class`.
+- Modules are like namespaces or libraries in other languages. They have the same format as a Class, except using the `module` keyword instead of `class`.
 - Just like Classes, Module names have to start with a capital letter.
 - You can use the `include` keyword in a class to give it access to a module's methods, variables, and data.
 ```
@@ -388,7 +462,45 @@ alice.send_money(bob, 5)
 print alice.balance
 print bob.balance
 ```
-- Enumerable is cool
+- Two of the most important mixins in Ruby are `enumerable` and `comparable`.
+- Implementing `enumerable` requires that the class implements `each`.
+- Implementing `comparable` requires that the class implements the spaceship operator, `<=>`.
+- `a <=> b` evaluates to
+  - 1 if `a > b`
+  - -1 if `a < b`
+  - 0 otherwise
+- An example of enumerable and comparable,
+```
+class Person
+  include Comparable
+  attr_accessor :name, :id
+
+  def initialize(name, id)
+    @name = name
+    @id = id
+  end
+
+  def <=>(other)
+    if self.id > other.id
+      return 1
+    elsif self.id < other.id
+      return -1
+    else
+      return 0
+    end
+  end
+
+  def to_s
+    name + ", ID # " + id
+  end
+end
+
+irb(main):025:0> alice = Person.new("Alice", 3)
+irb(main):026:0> bob = Person.new("Bob", 1)
+irb(main):027:0> chuck = Person.new("Chuck", 2)
+irb(main):029:0> x.sort
+=> [#<Person:0x000055ab9a9a2ab8 @name="Bob", @id=1>, #<Person:0x000055ab9a9385c8 @name="Chuck", @id=2>, #<Person:0x000055ab9a992258 @name="Alice", @id=3>]
+```
 
 ### Find
 - Question: Find out how to access files with and without code blocks. What is the benefit of the code block?
