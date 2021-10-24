@@ -1,6 +1,6 @@
 # Seven Languages in Seven Weeks
 # Week 1 - Ruby
-## Day 1 self-study
+## Day 1: Finding a Nanny
 - Very little unneeded punctuation, but plenty of syntactic sugar in Ruby, meant to make things as productive as possible for the programmer rather than the computer.
 - Two types of string literals: single-quoted and double-quoted. Single-quoted are just taken at face value, whereas double-quoted are more like Python f-strings. The latter can have variables substituted into them, and will also correctly interpret things like `\n` as special characters:
 ```
@@ -221,7 +221,7 @@ Guess a number between 1 and 10, inclusive
 Too low
 ```
 
-## Day 2 self-study
+## Day 2: Floating Down from the Sky
 ### Arrays
 - Ruby arrays are like lists or vectors in most languages, not static like C/C++ arrays.
 - A single array may have values of different types, e.g., `x = [1, "dog", ["another_list"]]`
@@ -701,3 +701,166 @@ irb(main):201:0> grep('test.txt', 'world')
 4: world world world world
 => #<File:test.txt>
 ```
+
+## Day 3: Serious change
+### Metaprogramming
+- Programs that write programs. This is one of the key strengths of Ruby.
+- Example in Ruby on Rails, uses the `has_many` and `has_one` methods to create the setters, getters, and storage variables needed to establish these relationships without the programmer wasting time spelling out how this should be done:
+```
+class Department < ActiveRecord::Base
+  has_many:employees
+  has_one:manager
+end
+```
+### Open Classes
+- Every Class in Ruby is redefinable at any time. This makes it very flexible, and also breakable.
+- For example, we can add a `blank?` method to `nil` and to String objects like so:
+```
+class NilClass
+  def blank?
+    true
+  end
+end
+
+class String
+  def blank?
+    self.size == 0
+  end
+end
+
+["", "person", nil].each do |element|
+  puts element unless element.blank?
+end
+```
+- The example above lets us treat a `nil` and an empty string the same way.
+- This can back-fire if you redefine something like `Class.new`.
+- Another cool use is adding methods to the `Numeric` class to make unit conversion easy. See the `ruby\units.rb` example for this.
+### Via method_missing
+- `method_missing` is a debugging function Ruby calls when you try to invoke an method that doesn't exist.
+- Many Ruby programmers overload this function to allow for all kinds of syntactical gymnastics.
+- For example, you can implement Roman numerals like so (from `ruby\roman.rb`):
+```
+class Roman
+  def self.method_missing name, *args
+    roman = name.to_s
+    roman.gsub!("IV", "IIII")
+    roman.gsub!("IX", "VIIII")
+    roman.gsub!("XL", "XXXX")
+    roman.gsub!("XC", "LXXXX")
+
+    (roman.count("I") +  
+     roman.count("V") * 5 +
+     roman.count("X") * 10 +
+     roman.count("L") * 50 +
+     roman.count("C") * 100)
+  end
+end
+
+irb(main):016:0> puts Roman.X
+10
+=> nil
+irb(main):017:0> puts Roman.XC
+90
+=> nil
+irb(main):018:0> puts Roman.XII
+12
+=> nil
+irb(main):019:0> puts Roman.X
+10
+=> nil
+```
+### Modules
+- Modules are the primary way Ruby programmers use metaprogramming.
+- The file `ruby\acts_as_csv_module.rb` provides a pretty weird example of this. The class `RubyCsv` has a single method called `acts_as_csv`.
+- When `acts_as_csv` is called, the module it's defined in actually adds new methods to the `RubyCsv` class at runtime.
+- This is more than simple inheritance, then. Instead, we're looking at classes that can morph and evolve in real-time, depending on what the situation requires.
+
+### Day 3 Self-Study
+#### Do
+- Question: Modify the CSV application to support an `each` method to return a CsvRow object. Use `method_missing` on that `CsvRow` to return the value for the column for a given heading.
+```
+class CsvRow
+  def method_missing name, *args
+    column = name.to_s
+    column = @headers.index(column)
+    @row_contents[column]
+  end
+
+  def initialize(headers, row_contents)
+    @headers = headers
+    @row_contents = row_contents
+  end
+end
+
+module ActsAsCsv
+  def self.included(base)
+    base.extend ClassMethods
+  end
+
+  module ClassMethods
+    def acts_as_csv
+      include InstanceMethods
+    end
+  end
+
+  module InstanceMethods
+    def read
+      @csv_contents = []
+      filename = self.class.to_s.downcase + '.txt'
+      file = File.new(filename)
+      @headers = file.gets.chomp.split(', ')
+
+      file.each do |row|
+        @csv_contents << CsvRow.new(@headers, row.chomp.split(', '))
+      end
+    end
+
+    def each(&blk)
+      @csv_contents.each(&blk)
+    end
+
+    attr_accessor :headers, :csv_contents
+    def initialize
+      read
+    end
+  end
+end
+
+class RubyCsv  # no inheritance! You can mix it in
+  include ActsAsCsv
+  acts_as_csv
+end
+
+irb(main):053:0> csv = RubyCsv.new
+=> #<RubyCsv:0x0000564de1598ed8 @csv_contents=[#<CsvRow:0x0000564de1598a78 @headers=["one", "two"], @row_contents=[]>, #<CsvRow:0x0000564de1...
+irb(main):054:0> csv.each {|row| puts row.one}
+
+lions
+
+=> [#<CsvRow:0x0000564de1598a78 @headers=["one", "two"], @row_contents=[]>, #<CsvRow:0x0000564de1598910 @headers=["one", "two"], @row_contents=["lions", "tigers"]>, #<CsvRow:0x0000564de15987d0 @headers=["one", "two"], @row_contents=[]>]
+```
+
+## 2.5 Wrapping Up Ruby
+### Core strengths
+- Pure object orientation
+- Duck typing
+- Modules and open classes
+- Extremely productive
+
+### Scripting
+- Again, being so productive and expressive, Ruby is well-suited to one-offs and glue code.
+
+### Web Development
+- Ruby on Rails is one of the most popular web development frameworks ever.
+- Rails is expressive enough that you can configure a production web app with a few lines of code.
+- It handles all the details of database schemes and moving between them for you.
+
+
+### Time to Market
+- Similar to Python, Ruby has libraries for everything. This is due to its ubiquity in the startup world, and its common use as "glue code."
+- Used in commercial sites all the time. Twitter ran on Ruby for years (although it eventually moved to another language in this book, Scala.)
+
+### Weaknesses
+- Performance is Ruby's biggest weakness. This hasn't stopped it from being adopted in high-performance environments, but it comes with the turf of an interpreted language with absolute freedom.
+- Ruby's use of OOP complicates how it deals with concurrency, just as it does with any OOP language.
+- Ruby's Duck Typing is one of its most useful features, but it inevitably reduces type safety and makes code analysis more difficult.
