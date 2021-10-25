@@ -1215,4 +1215,147 @@ Zerg specifyMacro("macroHarder")
 ```
 
 ## Day 2: The Sausage King
+### Conditionals and Loops
+- Io has an unconditional `loop`, but this is only useful for concurrency
+```
+Io> loop("I'm getting dizzy" println)
+I'm getting dizzy
+I'm getting dizzy
+I'm getting dizzy
+I'm getting dizzy
+...
+I'm getting dizzy
+^C
+IOVM:
+        Received signal. Setting interrupt flag.
+
+  current coroutine
+  ---------
+  Coroutine callStack                  A4_Exception.io 244
+  Coroutine backTraceString            A4_Exception.io 274
+  Coroutine showStack                  System.io 69
+  System userInterruptHandler          [unlabeled] 0
+  Sequence println                     Command Line 1
+```
+- The conditional loops `while` and `for` are much more common, as you'd expect in any language
+```
+Io> i := 0
+==> 0
+Io> while(i<=11, i println; i = i + 1); "This one goes up to 11" println
+0
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+This one goes up to 11
+==> This one goes up to 11
+```
+- For loops are pretty standard, taking the name of the counter variable, a starting value, an ending value, an *optional* increment, and the message with sender to execute at each stage of the loop:
+```
+Io> for(i, 1, 11, 2, i println); "This one goes up to 11" println
+1
+3
+5
+7
+9
+11
+This one goes up to 11
+==> This one goes up to 11
+```
+- `if` and `elseIf` are pretty normal:
+```
+Io> if(true) then(x := "someValue") else(x := "someOtherValue")
+==> nil
+Io> x
+==> someValue
+
+Io> if(false) then(x := "someValue") elseif(false) then(x := "someOtherValue") else(x := "aThirdValue")
+==> nil
+Io> x
+==> aThirdValue
+```
+
+### Operators
+- Io is definitely light on syntactic sugar, but it allows operator overloading and custom operators like any good OOP should.
+- Io's operators are defined in the `OperatorTable`
+```
+Io> OperatorTable
+==> OperatorTable_0x5590e92e3c40:
+Operators
+  0   ? @ @@
+  1   **
+  2   % * /
+  3   + -
+  4   << >>
+  5   < <= > >=
+  6   != ==
+  7   &
+  8   ^
+  9   |
+  10  && and
+  11  or ||
+  12  ..
+  13  %= &= *= += -= /= <<= >>= ^= |=
+  14  return
+
+Assign Operators
+  ::= newSlot
+  :=  setSlot
+  =   updateSlot
+
+To add a new operator: OperatorTable addOperator("+", 4) and implement the + message.
+To add a new assign operator: OperatorTable addAssignOperator("=", "updateSlot") and implement the updateSlot message.
+```
+- This table specifies what operators exist, as well as their precedence.
+- We can add a `xor` operator like this
+```
+Io> OperatorTable addOperator("xor", 11)
+...
+Io> true xor := method(bool, if(bool, false, true))
+==> method(bool,
+    if(bool, false, true)
+)
+Io> false xor := method(bool, if(bool, true, false))
+==> method(bool,
+    if(bool, true, false)
+)
+Io> true xor false
+==> true
+Io> true xor true
+==> false
+Io> false xor true
+==> true
+Io> false xor false
+==> false
+```
+### Messages
+- One of the trickiest concepts in Io is that everything is a message. Everything except comment markers and comments are messages.
+- 
+### Reflection
+### Day 2 Self-Study
+#### Do
+- Question: 1. A Fibonacci sequence starts with two 1s. Each subsequent number is the sum of the two numbers that came before: 1, 1, 2, 3, 5, 8, 13, 21, and so on. Write a program to find the nth Fibonacci number. fib(1) is 1, and fib(4) is 3. As a bonus, solve the problem with recursion and with loops.
+Answer:
+- Question: 2. How would you change / to return 0 if the denominator is zero?
+Answer:
+- Question: 3. Write a program to add up all of the numbers in a two-dimensional array.
+Answer:
+- Question: 4. Add a slot called myAverage to a list that computes the average of all the numbers in a list. What happens if there are no numbers in a list? (Bonus: Raise an Io exception if any item in the list is not a number.)
+Answer:
+- Question: 5. Write a prototype for a two-dimensional list. The dim(x, y) method should allocate a list of y lists that are x elements long. set(x, y, value) should set a value, and get(x, y) should return that value.
+Answer:
+- Question: 6. Bonus: Write a transpose method so that (new_matrix get(y, x)) == matrix get(x, y) on the original list.
+Answer:
+- Question: 7. Write the matrix to a file, and read a matrix from a file.
+Answer:
+- Question: 8. Write a program that gives you ten tries to guess a random number from 1--100. If you would like, give a hint of “hotter” or “colder” after the first guess.
+Answer:
+
 ## Day 3: The Parade and Other Strange Places
