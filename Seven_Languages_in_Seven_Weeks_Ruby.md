@@ -1337,12 +1337,114 @@ Io> false xor false
 ```
 ### Messages
 - One of the trickiest concepts in Io is that everything is a message. Everything except comment markers and comments are messages.
-- 
+- Every message has three components:
+  - The Sender - sends the message (and its arguments.)
+  - The Target - executes the message.
+  - The Arguments - included with the message.
+- The `call` method gives you access to this information via the arguments `sender`, `message`, `activated`, `slotContext`, or `target` (see https://iolanguage.org/guide/guide.html#Syntax-Messages ):
+```
+informative := method(x,
+  "sender:" println;
+  call sender println;
+  "message:" println;
+  call message println;
+  "activated:" println;
+  call activated println;
+  "slotContext:" println;
+  call slotContext println;
+  "target:" println;
+  call target println
+  )
+
+newObject := Object clone
+newObject getInfo := method(informative(1))
+newObject getInfo()
+```
+produces
+```
+sender:
+ Object_0x55b98ff0bc90:
+  getInfo          = method(...)
+
+message:
+informative(1)
+activated:
+
+# test.io:2
+method(x,
+    "sender:" println
+    call sender println
+    "message:" println
+    call message println
+    "activated:" println
+    call activated println
+    "slotContext:" println
+    call slotContext println
+    "target:" println
+    call target println
+)
+slotContext:
+ Object_0x55b98fb2ead0:
+  Lobby            = Object_0x55b98fb2ead0
+  Protos           = Object_0x55b98fb2e980
+  _                = nil
+  exit             = method(...)
+  forward          = method(...)
+  informative      = method(x, ...)
+  newObject        = Object_0x55b98ff0bc90
+  set_             = method(...)
+
+target:
+ Object_0x55b98ff0bc90:
+  getInfo          = method(...)
+```
+- There are more arguments specifically for `call message`:
+```
+y := method(a, b, c,
+  "message name: " print;
+  call message name println;
+  "message name: " print;
+  call message arguments println;
+  "message argAt(0): " print;
+  call message argAt(0) println;
+  "message argAt(1): " print;
+  call message argAt(1) println
+  "message argAt(2): " print;
+  call message argAt(2) println
+)
+
+y("first", "second", "third")
+message name: y
+message name: list("first", "second", "third")
+message argAt(0): "first"
+message argAt(1): "second"
+message argAt(2): "third"
+```
+- a
 ### Reflection
 ### Day 2 Self-Study
 #### Do
 - Question: 1. A Fibonacci sequence starts with two 1s. Each subsequent number is the sum of the two numbers that came before: 1, 1, 2, 3, 5, 8, 13, 21, and so on. Write a program to find the nth Fibonacci number. fib(1) is 1, and fib(4) is 3. As a bonus, solve the problem with recursion and with loops.
 Answer:
+```
+# with recursion
+fib := method(i,
+  if (i == 1 or i == 2) then (return 1) else (return fib(i - 1) + fib(i - 2)))
+for (i, 1, 14, fib(i) println)
+
+# with loops
+fib := method(i,
+  counter := 3;
+  sum := 1;
+  previous := 1;
+  while (counter < i,
+    temp := sum;
+    sum := sum + previous;
+    previous := temp;
+    counter := counter + 1)
+  return sum)
+for (i, 3, 14, fib(i) println)
+```
 - Question: 2. How would you change / to return 0 if the denominator is zero?
 Answer:
 - Question: 3. Write a program to add up all of the numbers in a two-dimensional array.
