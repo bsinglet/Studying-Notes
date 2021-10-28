@@ -581,10 +581,68 @@ for (i, 3, 14, fib(i) println)
 Answer:
 - Question: 3. Write a program to add up all of the numbers in a two-dimensional array.
 Answer:
+```
+x := list(list(0, 1, 2, 3), list(4, 5, 6, 7), list(8, 9, 10, 11), list(12, 13, 14, 15))
+"x: " println
+x println
+"x at(0) at(2): " println
+x at(0) at(2) println
+"x flatten: " println
+x flatten println
+"x flatten sum: " println
+x flatten sum println
+```
+produces:
+```
+x:
+list(list(0, 1, 2, 3), list(4, 5, 6, 7), list(8, 9, 10, 11), list(12, 13, 14, 15))
+x at(0) at(2):
+2
+x flatten:
+list(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15)
+x flatten sum:
+120
+```
 - Question: 4. Add a slot called myAverage to a list that computes the average of all the numbers in a list. What happens if there are no numbers in a list? (Bonus: Raise an Io exception if any item in the list is not a number.)
 Answer:
+```
+List myAverage := method(sum := 0;
+  call target foreach(index, value, sum := sum + value);
+  return (sum / (call target size)))
+x := list(1, 2, 3, 4)
+x myAverage(1) println
+
+2.5
+```
 - Question: 5. Write a prototype for a two-dimensional list. The dim(x, y) method should allocate a list of y lists that are x elements long. set(x, y, value) should set a value, and get(x, y) should return that value.
 Answer:
+```
+Matrix := Object clone
+Matrix dim := method(x, y,
+  self contents := List clone;
+  for(i, 0, y - 1,
+    self contents append(List clone);
+    x repeat(self contents at(i) append(0));
+    )
+  )
+Matrix set := method(x, y, value,
+  self contents at(y) atPut(x, value)
+  )
+Matrix get := method(x, y,
+  self contents at(y) at(x)
+  )
+x := Matrix clone
+x dim(3, 3)
+x set(0, 0, 1)
+x set(1, 2, 5)
+x contents at(0) println
+x contents at(1) println
+x contents at(2) println
+"x get(0, 0):  " print
+x get(0, 0) println
+"x get(1, 1):  " print
+x get(1, 2) println
+```
 - Question: 6. Bonus: Write a transpose method so that (new_matrix get(y, x)) == matrix get(x, y) on the original list.
 Answer:
 - Question: 7. Write the matrix to a file, and read a matrix from a file.
