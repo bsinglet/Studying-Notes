@@ -552,8 +552,20 @@ message argAt(0): "first"
 message argAt(1): "second"
 message argAt(2): "third"
 ```
-- a
+- You can even implement new control structures due to the flexibility in how messages are evaluated. The book gives this example of an implementation of `unless` (see `\io\unless.io`):
+```
+unless := method(
+    (call sender doMessage(call message argAt(0))) ifFalse(
+    call sender doMessage(call message argAt(1))) ifTrue(
+    call sender doMessage(call message argAt(2)))
+)
+
+unless(1 == 2, write("One is not two\n"), write("one is two\n"))
+```
+
 ### Reflection
+- Covered most of this in my notes above. There are many methods for getting information on objects and slots. `self proto` is one of the key ones.
+
 ### Day 2 Self-Study
 #### Do
 - Question: 1. A Fibonacci sequence starts with two 1s. Each subsequent number is the sum of the two numbers that came before: 1, 1, 2, 3, 5, 8, 13, 21, and so on. Write a program to find the nth Fibonacci number. fib(1) is 1, and fib(4) is 3. As a bonus, solve the problem with recursion and with loops.
@@ -579,6 +591,15 @@ for (i, 3, 14, fib(i) println)
 ```
 - Question: 2. How would you change / to return 0 if the denominator is zero?
 Answer:
+```
+# we have to copy the current division slot to another place so we
+# can still use it when the denominator isn't 0
+Number setSlot("regularDivision", Number getSlot("/"))
+# now we override the denominator method
+Number/ = method(denominator,
+  if (denominator == 0) then (return 0) else (return self regularDivision(denominator)))
+  )
+```
 - Question: 3. Write a program to add up all of the numbers in a two-dimensional array.
 Answer:
 ```
@@ -645,9 +666,99 @@ x get(1, 2) println
 ```
 - Question: 6. Bonus: Write a transpose method so that (new_matrix get(y, x)) == matrix get(x, y) on the original list.
 Answer:
+```
+Matrix transpose := method(
+  newMatrix := Matrix clone;
+  newMatrix dim(self contents size, self contents at(0) size);
+  for(y, 0, (self contents size) - 1,
+    for(x, 0, (self contents at(0) size) - 1,
+      newMatrix set(y, x, self get(x, y))
+      )
+    );
+  return newMatrix
+  )
+
+newMatrix := x transpose()
+for (y, 0, (newMatrix contents size) - 1,
+  newMatrix contents at(y) println
+  )
+```
 - Question: 7. Write the matrix to a file, and read a matrix from a file.
 Answer:
+```
+Matrix toFile := method(fileName,
+  fileHandle := File with(fileName);
+  # erase the old file if necessary
+  fileHandle remove;
+  fileHandle openForUpdating;
+  # the first line of the file will just be the x and y dimensions
+  fileHandle write(self contents at(0) size asString);
+  fileHandle write(" ")
+  fileHandle write(self contents size asString);
+  fileHandle write("\n")
+  # then each line of the file is a row of the matrix.
+  for (y, 0, (self contents size) - 1,
+      for (x, 0, (self contents at(y) size) - 1,
+        fileHandle write(self contents at(y) at(x) asString);
+        fileHandle write(" ");
+        )
+      fileHandle write("\n");
+    )
+  fileHandle close
+  )
+
+Matrix fromFile := method(fileName,
+  fileHandle := File with(fileName);
+  fileHandle openForReading;
+  topLine := fileHandle readLine;
+  topLine := topLine split(" ");
+  x_max := topLine first asNumber;
+  y_max := topLine second asNumber;
+  newMatrix := Matrix clone;
+  newMatrix dim(x_max, y_max);
+  for (y, 0, y_max - 1,
+    nextLine := fileHandle readLine;
+    nextLine split(" ") foreach(x, value, newMatrix set(x, y, value asNumber))
+    );
+  return newMatrix
+  )
+
+x toFile("test_x.txt")
+
+reloadedMatrix := Matrix fromFile("test_x.txt")
+for (y, 0, (reloadedMatrix contents size) - 1,
+  reloadedMatrix contents at(y) println )
+```
 - Question: 8. Write a program that gives you ten tries to guess a random number from 1--100. If you would like, give a hint of “hotter” or “colder” after the first guess.
 Answer:
+```
+guess := method(
+  Curses init
+  # pick a random number between 1 and 100, inclusive
+  random := ((Random value() * 100) + 1) integerMin
+  guesses := 0;
+  previous_diff := 0;
+  win := false;
+  while (guesses < 10,
+    Curses print("Guess the number between 1 and 100 (inclusive): ")
+    guess := Curses input(3) asNumber;
+    if (guess == random) then (win = true; break) else (
+      if (guesses > 0) then (
+        if (((random - guess) abs) < previous_diff) then (Curses print("Hotter")) else (Curses print("Colder"))
+        )
+      previous_diff := (random - guess) abs;
+      guesses := guesses + 1;
+    )
+  )
+  Curses end;
+  if (win) then ("You win!" print) else (
+    "You lost :(" println
+    "The correct answer was " print
+    random asString println
+    )
+  )
+
+guess()
+```
 
 ## Day 3: The Parade and Other Strange Places
