@@ -733,28 +733,27 @@ for (y, 0, (reloadedMatrix contents size) - 1,
 Answer:
 ```
 guess := method(
-  Curses init
   # pick a random number between 1 and 100, inclusive
   random := ((Random value() * 100) + 1) integerMin
   guesses := 0;
   previous_diff := 0;
   win := false;
   while (guesses < 10,
-    Curses print("Guess the number between 1 and 100 (inclusive): ")
-    guess := Curses input(3) asNumber;
+    "Guess the number between 1 and 100 (inclusive): " print
+    guess := File standardInput readLine;
+    guess := guess asNumber;
     if (guess == random) then (win = true; break) else (
       if (guesses > 0) then (
-        if (((random - guess) abs) < previous_diff) then (Curses print("Hotter")) else (Curses print("Colder"))
+        if (((random - guess) abs) < previous_diff) then ("Hotter" print) else ("Colder" print)
         )
       previous_diff := (random - guess) abs;
       guesses := guesses + 1;
     )
   )
-  Curses end;
-  if (win) then ("You win!" print) else (
-    "You lost :(" println
-    "The correct answer was " print
-    random asString println
+  if (win) then ("You win!" println) else (
+    "You lost :(" println;
+    "The correct answer was " print;
+    random asString println;
     )
   )
 
@@ -762,3 +761,5 @@ guess()
 ```
 
 ## Day 3: The Parade and Other Strange Places
+### Domain Specific Languages (DSLs)
+- a
