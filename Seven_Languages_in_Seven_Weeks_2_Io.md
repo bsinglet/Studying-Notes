@@ -930,3 +930,52 @@ Answer:
 Answer:
 
 ## 3.5 Wrapping Up Io
+- Io is a great example of a prototype-based language (e.g., JavaScript and Lua.)
+
+### Strengths
+#### Footprint
+- Io is small enough to run comfortably on embedded systems, something it has support for on many platforms already.
+- Io runs in its own small VM that is easily ported instead of requiring a bulky compiler that would need to handle the details of various platforms.
+
+#### Simplicity
+- You can learn Io's syntax in 15 minutes. The Io website gives the following informal BNF description that covers almost all of it (see https://iolanguage.org/guide/guide.html ):
+```
+exp        ::= { message | terminator }
+message    ::= symbol [arguments]
+arguments  ::= "(" [exp [ { "," exp } ]] ")"
+symbol     ::= identifier | number | string
+terminator ::= "\n" | ";"
+```
+- Because there are no reserved words, you can very quickly inspect and master the whole language.
+- This simplicity is also what makes it so easy to extend the syntax or transform it to meet your needs via metaprogramming.
+
+#### Flexibility
+- Duck-typing is always nice.
+- You can literally change any slot in any object. Thus, one line of Io can fundamentally change the entire language.
+- You can overload the `forward` slot in any object (or all objects) in order to alter or inspect the behavior of the language.
+
+#### Concurrency
+- Despite development starting in 2002, Io's concurrency is much fresher than older but more popular languages like Java and Ruby.
+- As a result, it's nearly effortless to use coroutines and Actors in Io.
+- Considerations of mutable vs immutable data were baked into Io's design from the beginning, rather than being bolted on after the fact.
+- The concepts introduced in Io's concurrency model are used in three other languages in this book: Scala, Erlang, and Haskell.
+
+### Weaknesses
+#### Syntax
+- Io has zero syntactic sugar. This makes Io very easy to parse, but difficult to analyze and troubleshoot.
+- A good analogy here is Assembly language. It's quite easy to understand each line of a series of Assembly instructions, but understanding the context or goal of them is much more difficult than in an higher-level, programmer-friendly language.
+
+#### Community
+- Io's community was very small at the time this book was published (2010), and has shrunk much more since then.
+- I couldn't find any active communities answering questions on it. Even the subreddit's most recent post was three years old at the time of writing this (November 2021.)
+
+#### Performance
+- The author mentions that Io has some features that slow down its single-threaded execution speed? I assume this has something to do with the flexibility of the language and how it runs in the VM.
+- This is probably the least important weakness, in my opinion.
+
+#### My own complaints
+- I love Io, but it looks like I discovered it too late. Active development of the language stopped a full two years before this book was written, 13 years before I read it.
+- Some of the retrospectives written online argued that Io's creator Steven Dekorte made a mistake in focusing on embedded systems over general ones. I can't comment on that, but I do think he went too far on the side of simplicity over programmer convenience.
+- My biggest complaint is how clumsy the interpreter is. I could tolerate the lack of autocompletion, but the lack of command history or even being able to paste multiple lines in safely is a deal-breaker for me.
+- These drawbacks essentially negate even having an interpreter, forcing you to develop with the kind of workflow typical of a compiled language.
+- I could not get any of the Io libraries working, including built-ins like URL and Random. I knew going into Io that I wouldn't have the third-party libraries of a language like Ruby or Python, but there's not much you can do without these core libraries.
