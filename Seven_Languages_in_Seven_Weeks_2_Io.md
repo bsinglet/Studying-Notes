@@ -762,4 +762,171 @@ guess()
 
 ## Day 3: The Parade and Other Strange Places
 ### Domain Specific Languages (DSLs)
-- a
+- One of the best uses of Io is for DSLs, as it is so compact and easily transformed into one.
+- Example of parsing this format:
+```
+{
+  "Adam Smith": "555-555-1234",
+  "Random Person": "555-555-4321"
+}
+```
+- The example file `io\phonebook.io` shows how to make it so that Io can parse this format natively:
+```
+# START:range
+OperatorTable addAssignOperator(":", "atPutNumber")
+# END:range
+# START:curlyBrackets
+curlyBrackets := method(
+  r := Map clone
+  call message arguments foreach(arg,
+       r doMessage(arg)
+       )
+  r
+)
+# END:curlyBrackets
+# START:atPutNumber
+Map atPutNumber := method(
+  self atPut(
+       call evalArgAt(0) asMutable removePrefix("\"") removeSuffix("\""),
+       call evalArgAt(1))
+)
+# END:atPutNumber
+# START:use
+s := File with("phonebook.txt") openForReading contents
+phoneNumbers := doString(s)
+phoneNumbers keys   println
+phoneNumbers values println
+# END:use
+```
+- This example adds `:` as a new operator, and adds some methods that will parse curly brackets as a call to create a new `Map`, assigning the proper key-value pairs.
+
+### Io's missing_method
+- In the previous chapter, we discussed how `missing_method` can dramatically alter the syntax for a given class (or all classes.)
+- The equivalent in Io is the `forward` method, which transforms Io's syntax even more completely than `missing_method` changes Ruby's.
+- The `io\builder.io` example allows you to build XML by parsing something like this:
+```
+body(
+  p("This is some test paragraph content.")
+  )
+```
+- The example source `io\builder.io` is:
+```
+Builder := Object clone
+Builder forward := method(
+  writeln("<", call message name, ">")
+  call message arguments foreach(
+	arg,
+	content := self doMessage(arg);
+	if(content type == "Sequence", writeln(content)))
+  writeln("</", call message name, ">"))
+Builder  ul(
+	li("Io"),
+	li("Lua"),
+	li("JavaScript"))
+```
+- And this gives us the expected output:
+```
+<ul>
+  <li>
+    Io
+  </li>
+  <li>
+    Lua
+  </li>
+  <li>
+    JavaScript
+  </li>
+</ul>
+```
+- We'll expand this example more in the upcoming exercises.
+
+### Concurrency
+- Io's creator was very forward-thinking when it comes to concurrency.
+
+#### Coroutines
+- A **coroutine** is one of the building blocks of concurrency. A coroutine is a function with multiple entry and exit blocks, allowing it to voluntarily give up control or resume execution smoothly.
+- This is in contradistinction to methods of scheduling that may stop execution of a thread at any given instruction (i.e., **pre-emptive multitasking**.) Pre-emptive multitasking requires a lot of work on the programmer's part to ensure that multitasking doesn't leave files or other resources in invalid states.
+- The `yield` keyword voluntarily suspends the process.
+- A message is sent synchronously by prepending the message with `@` or `@@`.
+- `@` returns a future.
+- `@@` returns nil and starts the message in its own thread.
+- The book provides the `io\coroutine.io` example:
+```
+vizzini := Object clone
+vizzini talk := method(
+            "Fezzik, are there rocks ahead?" println
+            yield
+            "No more rhymes now, I mean it." println
+             yield)
+
+fezzik := Object clone
+
+fezzik rhyme := method(
+			yield
+            "If there are, we'll all be dead." println
+            yield
+            "Anybody want a peanut?" println)
+
+vizzini @@talk; fezzik @@rhyme
+
+Coroutine currentCoroutine pause
+```
+- This example sets up the `vizzini` and `fezzik` objects with lines from *The Princess Bride*, triggers their messages `talk` and `rhyme` in their own threads, and uses `pause` to ensure that the program runs until all asynchronous messages complete.
+- The output from this is:
+```
+$ io coroutine.io
+Fezzik, are there rocks ahead?
+If there are, we'll all be dead.
+No more rhymes now, I mean it.
+Anybody want a peanut?
+Scheduler: nothing left to resume so we are exiting
+
+  Exception: Scheduler: nothing left to resume so we are exiting
+  ---------
+  Coroutine callStack                  A4_Exception.io 244
+  Coroutine backTraceString            A4_Exception.io 274
+  Coroutine showStack                  A4_Exception.io 177
+  Coroutine pause                      Actor.io 150
+  Object actorProcessQueue             Actor.io 115
+```
+
+#### Actors
+- **Actors** are the abstractions that utilize coroutines for more complex behavior. Actors send, receive, and process messages, as well as create other actors.
+- Io handles these messages concurrently by placing messages into queues that are then processed by coroutines.
+- There's no real complexity to creating an actor in Io. In fact, all you need to do is to send an asynchronous message to an object and it immediately becomes an Actor.
+- For example, without Actors, these messages execute sequentially,
+```
+slower := Object clone
+slower start := method(wait(2); writeln("slowly"))
+faster := Object clone
+faster start := method(wait(1); writeln("quickly"))
+slower start; faster start;
+Io> slower start; faster start;
+slowly
+quickly
+==> nil
+```
+- But we can make `faster` and `slower` into Actors with `@@`,
+```
+Io> slower @@start; faster @@start; wait(3)
+quickly
+slowly
+quickly
+==> nil
+```
+
+### Futures
+- A **future** is an object returned immediately from an asynchronous message call. It remains null until the actual result of that call is available.
+- If you check the value of a future, the process will block until the value is available (if it isn't already.)
+- Futures in Io provide automatic deadlock detection, which is useful as you could get circular dependencies otherwise.
+
+### Day 3 Self-Study
+#### Do:
+- Question: Enhance the XML program to add spaces to show the indentation structure.
+Answer:
+- Question: Create a list syntax that uses brackets.
+Answer:
+- Question: Enhance the XML program to handle attributes: if the first argument is a map (use the curly brackets syntax), add attributes to the XML tag. For example `book({"author": "Tate"}...)` would print `<book author="Tate">`
+Answer:
+
+## 3.5 Wrapping Up Io
