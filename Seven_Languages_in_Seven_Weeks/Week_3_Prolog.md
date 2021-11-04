@@ -66,41 +66,185 @@ yes
 
 no
 ```
-- a
+- So, when we query `friends(wallace, grommit).`, Prolog checks the first sub-goal, making sure that `wallace` is not `grommit`, which it isn't. Then it tries to find a value of `Z` that will simultaneously solve both of the remaining sub-goals (i.e., something that both `wallace` and `grommit` like.)
+- In Prolog, rules are referred to by the number of parameters they take, so we can refer to this as `friends/2`. This is particularly useful when the same rule has multiple arities, often with the forms with fewer parameters representing the base case.
 
 ### Filling in the Blanks
-- a
+- We can query Prolog with more than just yes or no questions. For example, let's ask which variable value satisfies our requirements (example `prolog/food.pl`):
+```
+food_type(velveeta, cheese).
+food_type(ritz, cracker).
+food_type(spam, meat).
+food_type(sausage, meat).
+food_type(jolt, soda).
+food_type(twinkie, dessert).
+
+flavor(sweet, dessert).
+flavor(savory, meat).
+flavor(savory, cheese).
+flavor(sweet, soda).
+
+food_flavor(X, Y) :- food_type(X, Z), flavor(Y, Z).
+```
+- We can query which foods are `savory` with, `flavor(savory, What).`. Prolog recognizes `What` as a variable by its capitalization, and allows us to find one or all solutions:
+```
+| ?- flavor(savory, What).
+
+What = meat ? a
+
+What = cheese
+
+yes
+```
 
 #### Map Coloring
-- a
+- This is first example that shows the power of Prolog. Map coloring is a classic mathematical problem: how do you render a map with the minimum number of colors, without adjacent territories having the same color?
+- Instead of coming up with an algorithm for this, we can simply tell Prolog that three colors are different from each other. Then we can tell it which states need to have different colors from each other (example `prolog/map.pl`):
+```
+different(red, green). different(red, blue).
+different(green, red). different(green, blue).
+different(blue, red). different(blue, green).
+
+coloring(Alabama, Mississippi, Georgia, Tennessee, Florida) :-
+  different(Mississippi, Tennessee),
+  different(Mississippi, Alabama),
+  different(Alabama, Tennessee),
+  different(Alabama, Mississippi),
+  different(Alabama, Georgia),
+  different(Alabama, Florida),
+  different(Georgia, Florida),
+  different(Georgia, Tennessee).
+```
+- Within a few seconds, Prolog compiles this knowledge base and presents the six valid solutions out of 243 possible combinations:
+```
+| ?- ['map'].
+compiling /home/kali/Downloads/code/prolog/map.pl for byte code...
+/home/kali/Downloads/code/prolog/map.pl compiled, 22 lines read - 1731 bytes written, 7 ms
+
+(1 ms) yes
+| ?- coloring(Alabama, Mississippi, Georgia, Tennessee, Florida).
+
+Alabama = blue
+Florida = green
+Georgia = red
+Mississippi = red
+Tennessee = green ? a
+
+Alabama = green
+Florida = blue
+Georgia = red
+Mississippi = red
+Tennessee = blue
+
+Alabama = blue
+Florida = red
+Georgia = green
+Mississippi = green
+Tennessee = red
+
+Alabama = red
+Florida = blue
+Georgia = green
+Mississippi = green
+Tennessee = blue
+
+Alabama = green
+Florida = red
+Georgia = blue
+Mississippi = blue
+Tennessee = red
+
+Alabama = red
+Florida = green
+Georgia = blue
+Mississippi = blue
+Tennessee = green
+
+(1 ms) no
+```
 
 #### Where's the Program?
-- a
+- Unlike in a procedural language, we didn't tell Prolog an algorithm. We didn't define any loops or branching logic. We simply laid out a few, obvious constraints and let Prolog do the work for us.
 
 ### Unification, Part 1
-- a
+- `=` in Prolog means **unification** rather than assignment. Unification is the process of making two structures identical.
+- In other words, `=` is more like the equals sign in mathematics than in most programming languages. We're telling Prolog to solve for the variables that balance out both sides of the equals sign.
 
 ### Prolog in Practice
-- a
+- Book here gives an interview with someone who used Prolog for scheduling, as well as modeling the knowledge base a dolphin was trained on.
+- The example is pretty cool, as the dolphin developed a behavior that confused the trainers, but querying Prolog revealed the dolphin was exploiting a loophole based on a command the trainers had forgotten.
 
 ### Day 1 Self-Study
 #### Find:
-- Question:
+- Question: Some free Prolog tutorials.
 Answer:
-- Question:
-Answer:
-- Question:
-Answer:
+  - http://www.cs.nuim.ie/~jpower/Courses/Previous/PROLOG/
+  - https://www.usna.edu/Users/cs/roche/courses/f18si413/proj/prolog.php
+  - http://jmvanel.free.fr/ai/prolog-getting-started.html
+- Question: A support forum (there are several.)
+Answer: https://www.reddit.com/r/prolog/
+- Question: One online reference for the Prolog version you're using.
+Answer: http://www.gprolog.org/manual/html_node/index.html
 
 #### Do:
-- Question:
+- Question: Make a simple knowledge base. Represent some of your favorite books and authors.
 Answer:
-- Question:
+```
+wrote(frank_herbert, dune).
+wrote(jrr_tolkien, lotr).
+wrote(jrr_tolkien, hobbit).
+wrote(jrr_tolkien, silmarillion).
+wrote(william_gibson, neuromancer).
+```
+- Question: Find all books in your knowledge base written by one author.
 Answer:
-- Question:
+```
+| ?- ['books'].
+compiling /home/kali/books.pl for byte code...
+/home/kali/books.pl compiled, 5 lines read - 703 bytes written, 5 ms
+
+(1 ms) yes
+| ?- wrote(jrr_tolkien, What).
+
+What = lotr ? a
+
+What = hobbit
+
+What = silmarillion
+
+yes
+```
+- Question: Make a knowledge base representing musicians and instruments. Also represent musicians and their genre of music.
 Answer:
-- Question:
+```
+played(taylor_swift, guitar).
+played(taylor_swift, piano).
+played(tom_morello, guitar).
+played(yo-yo_ma, cello).
+genre(taylor_swift, country).
+genre(taylor_swift, pop).
+genre(tom_morello, rock).
+genre(tom_morello, rap_metal).
+genre(tom_morello, alternative_metal).
+genre(yo-yo_ma, classical).
+genre(yo-yo_ma, pop).
+```
+- Question: Find all musicians who play the guitar.
 Answer:
+```
+| ?- ['music'].
+compiling /home/kali/music.pl for byte code...
+/home/kali/music.pl compiled, 11 lines read - 1521 bytes written, 7 ms
+
+(1 ms) yes
+| ?- played(Who, guitar).
+
+Who = taylor_swift ? a
+
+Who = tom_morello
+
+no
+```
 
 ## Day 2: Fifteen minutes to Wapner
 - a
