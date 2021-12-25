@@ -247,6 +247,228 @@ no
 ```
 
 ## Day 2: Fifteen minutes to Wapner
-- a
-
 ### Recursion
+- Usually use recursion in place of iteration in declarative languages, especially when dealing with trees and lists.
+- As in mathematics, recursion involves defining a base case and a general case.
+- Example in the book is the family tree of the male members of Walton family (example `prolog/family.pl`):
+```
+father(zeb, john_boy_sr).
+father(john_boy_sr, john_boy_jr).
+ancestor(X, Y) :- father(X, Y).
+ancestor(X, Y) :- father(X, Z), ancestor(Z, Y).
+```
+- This example defines two facts, and two clauses for the `ancestor/2` rule. These two clauses are independent of each other. The first clause is that X is the ancestor of Y if X is the father of Y. The second clause is the recursive clause. X is the ancestor of Y if X is the father of some person Z, and Z is the ancestor of Y. In other words, my ancestor's ancestor is still my ancestor.
+- We can work with this database the same way we did other ones, feeding it statements Prolog can judge as true/false, or using variables to find solutions.
+- Although Prolog hides most of the backend magic from us, we do need to be aware of how it handles Tail Recursion Optimization. We need to place recursive subgoals at the end of recursive rules in order for Prolog to properly optimize them. Without this, you run into errors from the stack space being depleted, but using it results in a constant stack cost for these rules.
+
+### Lists and Tuples
+- Lists and tuples are similar to structures in other languages. Lists are variable-length containers, denoted by square brackets like `[1, 2, 3]`. Tuples are fixed-length containers denoted by parentheses like `(1, 2, 3)`.
+
+#### Unification, Part 2
+- Prolog applies unification to lists and tuple similarly to how it does with rules. It tries to get the left and right sides to match, usually by finding solutions for any variables in the two sides of the equation.
+- For example,
+```
+| ?- (1, 2, 3) = (1, A, 3).
+A = 2
+yes
+| ?- (1, 3, 2) = (1, A, 3).
+no
+| ?- (1, 3, A) = (1, A, 3).
+A = 3
+yes
+```
+- One of the features exclusive to Lists are the built-in keywords `Head` and `Tail`. `Head` always binds to the first element in a list, while `Tail` binds to the rest, similar to `car` and `cdr` in Lisp. Note that these keywords require the list to have one or more elements:
+```
+| ?- [] = [Head|Tail].
+no
+| ?- [1] = [Head|Tail].
+Head = 1
+Tail = []
+yes
+| ?- [1, 2, 3] = [Head|Tail].
+Head = 1
+Tail = [2,3]
+yes
+```
+- We can also split the list into sublists, and take the Head and Tail of those sublists. The syntax is a little tricky here, you have to remember to use `|` instead of `,`:
+```
+| ?- [1, 2, 3] = [1, [Head|Tail]].
+
+no
+| ?- [1, 2, 3] = [1|[Head|Tail]].
+
+Head = 2
+Tail = [3]
+
+yes
+```
+- We can also use the `_` wildcard to tell Prolog it can match anything without it needing to match the same value in each position we use it. Compare
+```
+| ?- [1, 2, 3, 4, 5] = [A, A| [Head|Tail]].   
+
+no
+```
+with
+```
+| ?- [1, 2, 3, 4, 5] = [_, _| [Head|Tail]].
+
+Head = 3
+Tail = [4,5]
+
+yes
+```
+And we can extend this further,
+```
+| ?- [1, 2, 3, 4, 5] = [_, _, _| [Head|Tail]].
+
+Head = 4
+Tail = [5]
+
+yes
+```
+
+### Lists and Maths
+- The author defines five simple rules in the example `prolog/list_math.pl` to implement counting, summing, and averaging of lists:
+```
+count(0, []).
+count(Count, [Head|Tail]) :- count(TailCount, Tail), Count is TailCount + 1.
+
+sum(0, []).
+sum(Total, [Head|Tail]) :- sum(Sum, Tail), Total is Head + Sum.
+
+average(Average, List) :- sum(Sum, List), count(Count, List), Average is Sum/Count.
+```
+- The logic here is dead simple, but the syntax takes some getting used to. The use of `is` to define certain variables is particularly strange.
+- It's impressive to see how simply we can define these functions without invoking any built-in mathematical operations for lists, simply using recursion and the operators `+` and `/`.
+- The key to this succinctness is that we're using goals and recursive subgoals in place of defining actual recursive processes. We tell Prolog what we want, it figures out how to make it happen.
+
+#### Using Rules in Both Directions
+- One of the most powerful rules in Prolog is `append`. The rule `append(List1, List2, List3)` is true if List3 is List1 + List2.
+- This would be a pretty boring function in imperatives languages, only good for concatenating lists, but in Prolog it can be used for everything from comparing lists, building lists, finding differences in lists, and even computing possible partitions of a list:
+```
+| ?- append([1], [2], [1, 2, 3]).   
+
+no
+| ?- append([1], [2, 3], What).  
+
+What = [1,2,3]
+
+yes
+| ?- append([1], What, [1, 2, 3]).  
+
+What = [2,3]
+
+yes
+| ?- append(A, B, [1, 2, 3]).
+
+A = []
+B = [1,2,3] ? ;
+
+A = [1]
+B = [2,3] ? ;
+
+A = [1,2]
+B = [3] ? ;
+
+A = [1,2,3]
+B = []
+
+yes
+```
+- Despite the versatility of this function, we can implement it ourselves very simply. The book walks through the logic of constructing this rule, but here's the example code (see `prolog/concat_step_3.pl`):
+```
+concatenate([], List, List).
+concatenate([Head|[]], List, [Head|List]).
+concatenate([Head1|[Head2|[]]], List, [Head1, Head2|List]).
+concatenate([Head1|[Head2|[Head3|[]]]], List, [Head1, Head2, Head3|List]).
+```
+
+### Day 3 Self-Study
+#### Find:
+- Question: Some implementations of a Fibonacci series and factorials. How do they work?
+Answer: Instead of looking these up, I tried to implement them myself. My first attempt smashed the stack:
+```
+nth-factorial(0, 1).
+nth-factorial(N, X) :- nth-factorial(N - 1, Y), X is N * Y.
+```
+resulting in,
+```
+| ?- nth-factorial(0, What).
+
+What = 1 ?
+
+yes
+| ?- nth-factorial(1, What).
+
+Fatal Error: local stack overflow (size: 16384 Kb, reached: 16383 Kb, environment variable used: LOCALSZ)
+```
+Looking at examples online, I thought it was simplying applying the second rule without limit, so I adopted a subgoal of `N > 0` and tried again:
+```
+| ?- nth-factorial(0, What).
+
+What = 1 ?
+
+yes
+| ?- nth-factorial(1, What).
+
+no
+```
+So, this version didn't overflow the stack, but it simply gave up in the ccase of N = 0. The final improvement needed was naming an intermediate variable for the recursive call to `nth-factorial`, changing
+```
+nth-factorial(N, X) :- N > 0, nth-factorial(N - 1, Y), X is N * Y.
+```
+to
+```
+nth-factorial(N, X) :- N > 0, N1 is N - 1, nth-factorial(N1, Y), X is N * Y.
+```
+The latter case works as expected, producing the proper series `1, 1, 2, 6, 24` and so on. I'm still not sure why we need to define `N1` instead of using the expression `N - 1` directly.
+Following from this, it was easy to implement the fibonacci sequence similarly:
+```
+```
+which resulted in accurate queries:
+```
+| ?- fibonacci(3, X).
+
+X = 3 ?
+
+yes
+| ?- fibonacci(4, X).
+
+X = 5 ?
+
+yes
+| ?- fibonacci(5, X).
+
+X = 8 ?
+
+yes
+| ?- fibonacci(10, X).
+
+X = 89 ?
+
+yes
+| ?- fibonacci(11, X).
+
+X = 144 ?
+
+(1 ms) yes
+```
+- Question: A real-world community using Prolog. What problems are they solving with it today?
+Answer:
+
+More advanced questions
+- Question: An implementation of the Towers of Hanoi. How does it work?
+Answer:
+- Question: What are some of the problems of dealing with “not” expressions? Why do you have to be careful with negation in Prolog?
+Answer:
+
+#### Do:
+- Question: Reverse the elements of a list.
+Answer:
+- Question: Find the smallest elements of a list.
+Answer:
+- Question: Sort the elements of a list.
+Answer:
+
+## 4.4 Day 3: Blowing Up Vegas
+###
